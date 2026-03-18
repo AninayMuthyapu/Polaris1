@@ -1,45 +1,42 @@
-'use client'
-import {ClerkProvider} from '@clerk/nextjs'
-import { ReactNode } from 'react'
-import { ConvexReactClient } from 'convex/react'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import { useAuth } from '@clerk/nextjs'
-import { ThemeProvider } from './theme-provider'
-import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react'
-import { SignInButton, SignUpButton } from '@clerk/nextjs'
-if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-  throw new Error('Missing NEXT_PUBLIC_CONVEX_URL in your .env file')
-}
+"use client";
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL)
+import { 
+  Authenticated, 
+  Unauthenticated,
+  ConvexReactClient,
+  AuthLoading, 
+} from "convex/react";
+import { ClerkProvider, useAuth } from "@clerk/nextjs";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 
-export function Providers({ children }: { children: ReactNode }) {
+import { UnauthenticatedView } from "@/features/auth/components/unauthenticated-view";
+import { AuthLoadingView } from "@/features/auth/components/auth-loading-view";
+
+import { ThemeProvider } from "./theme-provider";
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ClerkProvider>
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <ThemeProvider
-                attribute="class"
-                defaultTheme="dark"
-                enableSystem
-                disableTransitionOnChange
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+         <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
         >
-            <Authenticated >
-                {children}
-            </Authenticated>   
-            < Unauthenticated>
-                <SignInButton/>
-                <SignUpButton/>
-
-                
-            </Unauthenticated> 
-            <AuthLoading>
-                Loading...
-            </AuthLoading>
-            
-                
+          <Authenticated>
+            {children}
+          </Authenticated>
+          <Unauthenticated>
+            <UnauthenticatedView />
+          </Unauthenticated>
+          <AuthLoading>
+            <AuthLoadingView />
+          </AuthLoading>
         </ThemeProvider>
-      
-    </ConvexProviderWithClerk>
+      </ConvexProviderWithClerk>
     </ClerkProvider>
-  )
-}
+  );
+};
