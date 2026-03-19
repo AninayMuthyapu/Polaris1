@@ -1,5 +1,6 @@
 import { mutation,query } from "./_generated/server";
 import {v} from "convex/values"
+import { verifyAuth } from "./auth";
 export const create=mutation({
     args:{
         name:v.string(),
@@ -7,25 +8,42 @@ export const create=mutation({
     
     },
     handler:async(ctx,args)=>{
-        const identity=await ctx.auth.getUserIdentity();
-        if(!identity){
-            throw new Error("Unauthorized");
-        }
-        await ctx.db.insert("projects",{
+        const identity=await verifyAuth(ctx);
+        const projectId=await ctx.db.insert("projects",{
             name:args.name,
             ownerId:identity?.subject,
+            updatedAt:Date.now()
         });
+        return projectId;
     },
 });
 
-export const get=query({
-    args:{},
+export const getPartial=query({
+    args:{
+        limit:v.number(),
+    },
     handler:async(ctx,args)=>{
-        const identity = await ctx.auth.getUserIdentity();
-        if (identity === null) {
-            return [];
-        }
-        return  await ctx.db
+        const identity = await verifyAuth(ctx);
+
+        const query=  await ctx.db
+        .query("projects")
+        .withIndex("by_owner",(q)=> q.eq("ownerId",identity.subject))
+        .take(args.limit);
+    }
+})
+
+
+
+
+
+export const get=query({
+    args:{
+        
+    },
+    handler:async(ctx,args)=>{
+        const identity = await verifyAuth(ctx);
+
+        const query=  await ctx.db
         .query("projects")
         .withIndex("by_owner",(q)=> q.eq("ownerId",identity.subject))
         .collect();
